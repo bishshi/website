@@ -1,54 +1,134 @@
 ---
 import Layout from "../layouts/BlogPost.astro";
 import { wpquery } from "../graphql/wordPressQuery";
+import defaultCover from "../assets/blog-placeholder-1.jpg";
 
 const data = await wpquery({
-	query: `
- 	 {
-		posts{
-			nodes{
-				slug
-				excerpt
-				title
-                date
-			}
- 		 }
-	 }  
- 	`,
+  query: `
+    {
+      posts {
+        nodes {
+          slug
+          excerpt
+          title
+          date
+          featuredImage {
+            node {
+              sourceUrl
+            }
+          }
+        }
+      }
+    }
+  `,
 });
 ---
 
 <Layout title="Astro-WordPress Blog Posts">
-	<main>
-		<h1><span class="text-gradient">文章</span></h1>
+  <main>
+    <h1><span class="text-gradient">文章</span></h1>
 
-		{
-			data.posts.nodes.map((post: any) => (
-				<>
-					<h2 set:html={post.title} />
-					<p set:html={post.excerpt} />
-                    <p set:html={post.date} />
-				</>
-			))
-		}
-	</main>
+    <div class="card-grid">
+      {
+        data.posts.nodes.map((post: any) => {
+          const cover =
+            post.featuredImage?.node?.sourceUrl || defaultCover.src;
+          return (
+            <a href={`/posts/${post.slug}`} class="card">
+              <img src={cover} alt={post.title} class="cover" loading="lazy" />
+              <div class="card-content">
+                <h2 set:html={post.title} />
+                <p class="excerpt" set:html={post.excerpt} />
+                <p class="date">{new Date(post.date).toLocaleDateString()}</p>
+              </div>
+            </a>
+          );
+        })
+      }
+    </div>
+  </main>
 </Layout>
-<style>
-	main {
-		margin: auto;
-		padding: 1rem;
-		width: 800px;
-		max-width: calc(100% - 2rem);
-		color: white;
-		font-size: 20px;
-		line-height: 1.6;
-	}
 
-	h1 {
-		font-size: 4rem;
-		font-weight: 700;
-		line-height: 1;
-		text-align: center;
-		margin-bottom: 1em;
-	}
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    width: 1200px;
+    max-width: calc(100% - 2rem);
+    color: white;
+  }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .cover {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+
+  .card-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .excerpt {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    color: #ccc;
+    flex-grow: 1;
+  }
+
+  .date {
+    font-size: 0.85rem;
+    color: #aaa;
+    text-align: right;
+  }
+
+  @media (max-width: 600px) {
+    main {
+      width: 100%;
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+  }
 </style>
