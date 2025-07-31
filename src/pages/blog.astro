@@ -1,7 +1,7 @@
 ---
-import Layout from "../layouts/wordpress.astro";
+import Layout from "../layouts/BlogPost.astro";
 import { wpquery } from "../graphql/wordPressQuery";
-import defaultCover from "../assets/blog-placeholder-1.jpg";
+import defaultCover from "../assets/default.png";
 
 const data = await wpquery({
   query: `
@@ -9,12 +9,18 @@ const data = await wpquery({
       posts {
         nodes {
           slug
-          excerpt
           title
           date
+          excerpt(format: RENDERED)
+          content(format: RENDERED)
           featuredImage {
             node {
               sourceUrl
+            }
+          }
+          categories {
+            nodes {
+              slug
             }
           }
         }
@@ -22,29 +28,55 @@ const data = await wpquery({
     }
   `,
 });
+
+function buildPostUrl(post: any) {
+  const domain = "https://blog.class612.bond";
+  const date = new Date(post.date);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const category = post.categories?.nodes?.[0]?.slug || "uncategorized";
+  return `${domain}/index.php/${category}/${year}/${month}/${day}/${post.slug}/`;
+}
+
+// 生成摘要（优先 excerpt，否则截取正文前100字）
+function getExcerpt(post: any) {
+  const cleanHtml = (html: string) =>
+    html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  const text = post.excerpt || post.content || "";
+  return cleanHtml(text).slice(0, 100) + "...";
+}
 ---
 
-<Layout title="Astro-WordPress Blog Posts">
+<Layout title="近期文章">
   <main>
-    <h1><span class="text-gradient">文章</span></h1>
 
     <div class="card-grid">
       {
         data.posts.nodes.map((post: any) => {
           const cover =
             post.featuredImage?.node?.sourceUrl || defaultCover.src;
+          const url = buildPostUrl(post);
+          const excerpt = getExcerpt(post);
           return (
-            <a href={`/posts/${post.slug}`} class="card">
+            <a href={url} class="card" target="_blank" rel="noopener">
               <img src={cover} alt={post.title} class="cover" loading="lazy" />
               <div class="card-content">
                 <h2 set:html={post.title} />
-                <p class="excerpt" set:html={post.excerpt} />
+                <p class="excerpt">{excerpt}</p>
                 <p class="date">{new Date(post.date).toLocaleDateString()}</p>
               </div>
             </a>
           );
         })
       }
+    </div>
+
+    <!-- 所有文章按钮 -->
+    <div class="all-posts">
+      <a href="https://blog.class612.bond/" target="_blank" rel="noopener">
+        所有文章 →
+      </a>
     </div>
   </main>
 </Layout>
@@ -81,6 +113,7 @@ const data = await wpquery({
     overflow: hidden;
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    height: 360px; /* 固定卡片高度 */
   }
 
   .card:hover {
@@ -91,7 +124,7 @@ const data = await wpquery({
 
   .cover {
     width: 100%;
-    height: 160px;
+    height: 140px;
     object-fit: cover;
   }
 
@@ -100,11 +133,15 @@ const data = await wpquery({
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    justify-content: space-between; /* 内容和日期分隔 */
   }
 
   .card h2 {
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .excerpt {
@@ -112,13 +149,36 @@ const data = await wpquery({
     line-height: 1.5;
     margin-bottom: 1rem;
     color: #ccc;
-    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* 限制显示三行 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .date {
     font-size: 0.85rem;
     color: #aaa;
     text-align: right;
+    margin-top: auto;
+  }
+
+  .all-posts {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .all-posts a {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    text-decoration: none;
+    color: white;
+    transition: background 0.3s ease;
+  }
+
+  .all-posts a:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 
   @media (max-width: 600px) {
@@ -129,6 +189,14 @@ const data = await wpquery({
 
     h1 {
       font-size: 2rem;
+    }
+
+    .card {
+      height: 320px; /* 移动端稍微降低高度 */
+    }
+
+    .cover {
+      height: 120px;
     }
   }
 </style>

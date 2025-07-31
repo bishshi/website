@@ -1,0 +1,205 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  pubDate?: string | Date;
+  updatedDate?: string | Date;
+  heroImage?: string;
+}
+
+const { title, description, pubDate, updatedDate, heroImage } = Astro.props as Props;
+
+const safeDate = (date: string | Date | undefined) => {
+  if (!date) return undefined;
+  return typeof date === 'string' ? new Date(date) : date;
+};
+
+const pubDateObj = safeDate(pubDate);
+const updatedDateObj = safeDate(updatedDate);
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} />
+    <style>
+      main {
+        width: calc(100% - 2em);
+        max-width: 100%;
+        margin: 0;
+      }
+
+      .hero-image {
+        width: 100%;
+      }
+      .hero-image img {
+        display: block;
+        margin: 0 auto;
+        border-radius: 12px;
+        box-shadow: var(--box-shadow);
+      }
+
+      :global(.timeline-container) {
+        width: 900px;
+        max-width: calc(100% - 2em);
+        margin: 2em auto;
+        padding: 1em;
+        color: rgb(var(--gray-dark));
+      }
+
+      .title {
+        margin-bottom: 1em;
+        padding: 1em 0;
+        text-align: center;
+        line-height: 1;
+      }
+      .title h1 {
+        margin: 0 0 0.5em 0;
+      }
+      .date {
+        margin-bottom: 0.5em;
+        color: rgb(var(--gray));
+      }
+      .last-updated-on {
+        font-style: italic;
+      }
+
+      /* 时间线容器 */
+      :global(.timeline) {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        position: relative;
+        padding-left: 80px;
+      }
+
+      /* 左侧竖线贴边 */
+      :global(.timeline::before ){
+        content: "";
+        position: absolute;
+        left: 40px;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        background-color: rgba(0,0,0,0.1);
+      }
+
+      /* 全局样式，确保 slot 内事件生效 */
+      :global(.event-card) {
+        display: flex;
+        gap: 1.5rem;
+        position: relative;
+        padding: 1rem;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      :global(.event-card:hover) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      }
+
+      :global(.event-image) {
+        flex: 0 0 160px;
+        cursor: pointer;
+        z-index: 1;
+      }
+
+      :global(.event-image img) {
+        width: 160px;       /* 横向矩形 */
+        height: 100px;
+        object-fit: cover;  /* 裁剪填充 */
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+      }
+
+      :global(.event-image img:hover) {
+        transform: scale(1.05);
+      }
+
+      :global(.event-text) {
+        flex: 1;
+        padding-top: 0.2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      :global(.event-title) {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      :global(.event-description) {
+        font-size: 0.95rem;
+        color: #555;
+        line-height: 1.5;
+      }
+
+      /* 移动端适配 */
+      @media (max-width: 600px) {
+        :global(.timeline) {
+          padding-left: 0;
+        }
+        :global(.timeline::before) {
+          left: 0;
+        }
+        :global(.event-card) {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        :global(.event-image) {
+          width: 100%;
+          flex: none;
+        }
+        :global(.event-image img) {
+          width: 100%;
+          height: auto; /* 小屏自适应 */
+          border-radius: 6px;
+        }
+        :global(.event-text) {
+          width: 100%;
+          margin-top: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header />
+    <main>
+      <article>
+        <div class="hero-image">
+          {heroImage && <img src={heroImage} width="1020" height="510" alt={title} />}
+        </div>
+        <div class="timeline-container">
+          <div class="title">
+            <div class="date">
+              {pubDateObj && <FormattedDate date={pubDateObj} />}
+              {updatedDateObj && (
+                <div class="last-updated-on">
+                  Last updated on <FormattedDate date={updatedDateObj} />
+                </div>
+              )}
+            </div>
+            <h1>{title}</h1>
+            <hr />
+          </div>
+
+          <!-- 时间线内容插槽 -->
+          <div class="timeline">
+            <slot />
+          </div>
+        </div>
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>
