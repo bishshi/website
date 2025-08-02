@@ -4,10 +4,11 @@ import TimelineLayout from '../layouts/Timeline.astro';
 const events = [
   {
     id: 1,
-    imageUrl: '/images/default.png',
+    imageUrl: '/images/timeline/default.png',
     linkUrl: '#',
-    title: '事件',
-    description: '这是事件一的详细描述内容。',
+    title: '2021年8月',
+    description: '开学、军训',
+
   },
   {
     id: 2,
@@ -19,7 +20,7 @@ const events = [
 ];
 ---
 
-<TimelineLayout title="发展历程-" description="时间线卡片示例">
+<TimelineLayout title="时间线" description="时间线">
   {events.map(event => (
     <div class="event-card">
       <a href={event.linkUrl} class="event-image">
